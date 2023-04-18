@@ -4,9 +4,8 @@
 }
 
 let digit = ['0'-'9']
-let lower = ['a'-'z']
-let upper = ['A'-'Z']
-(*let alphanum = [lower upper digit '\'' '_']*)
+let alphanum = ['a'-'z' 'A'-'Z' '0'-'9' '\'' '_']
+
 
 rule token = parse
     | "//" [^ '\n']* '\n' {Lexing.new_line lexbuf; token lexbuf}
@@ -14,21 +13,18 @@ rule token = parse
     | [' ' '\t' '\r']   {token lexbuf}
     | '\n'              { Lexing.new_line lexbuf ; token lexbuf }
 
-   (* | lower (alphanum)* as s  { ID(s) }      *)
+ (*  | lower (alphanum)* as s  { ID(s) }     *)
 
     (* Mots clés *)
     | "And"       { AND }
     | "Begin"     { BEGIN }
     | "Blue"      { BLUE }
-    | "Bool"      { BOOL }
     | "Color"     { COLOR }
     | "Copy"      { COPY }
     | "Cos"       { COS }
     | "Draw"      { DRAW }
     | "Else"      { ELSE }
     | "End"       { END }
-    | "Float"     { FLOAT }
-    | "Float_of_int" { FLOAT_OF_INT }
     | "Floor"     { FLOOR }
     | "For"       { FOR }
     | "Foreach"   { FOREACH }
@@ -37,7 +33,6 @@ rule token = parse
     | "Head"      { HEAD }
     | "If"        { IF }
     | "In"        { IN }
-    | "Int"       { INT }
     | "List"      { LIST }
     | "Not"       { NOT }
     | "Or"        { OR }
@@ -51,6 +46,11 @@ rule token = parse
     | "To"        { TO }
     | "X"         { X }
     | "Y"         { Y }
+    | "true"      { BOOL(true) }
+    | "false"     { BOOL(false) }
+    | "bool"      { BOOL_TYP }
+    | "null"      { NULL_TYP }
+    | "return"    { RETURN }
 
     (* Opérateurs *)
     | "+"  { ADD }
@@ -68,6 +68,11 @@ rule token = parse
     | "."  { DOT }
 
     | eof  { EOF }
+    | "\"" ([^ '\"']* as s) "\""  { STRING(s) }
+    | (digit)* "." (digit)* as s {FLOAT(try float_of_string s with Failure _ -> raise (Error(s)) )}
+    | (digit)+ as s     { INT(try int_of_string s with Failure _ ->(let pos = Lexing.lexeme_start_p lexbuf in raise (Error(Format.sprintf "Line %d, char %d ,Read: '%s'. It is not a valid integer" pos.pos_lnum (pos.pos_cnum - pos.pos_bol +1) s)) ))}
+    | eof               { EOF }
+    | ['a'-'z' 'A'-'Z'] (alphanum)* as s  { ID(s) }
     | _ as s            { let pos = Lexing.lexeme_start_p lexbuf in raise (Error(Format.sprintf "Line %d, char %d ,Read: '%c'. It is not an acceptable character" pos.pos_lnum (pos.pos_cnum - pos.pos_bol +1) s)) }
 
 and commentary = parse

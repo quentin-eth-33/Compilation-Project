@@ -9,11 +9,17 @@
 
 (* Ajoutez ici vos règles de grammaire *)
 %token <string> ID
-%token AND BEGIN BLUE BOOL COLOR COPY COS DRAW ELSE END FLOAT FLOAT_OF_INT
-%token FLOOR FOR FOREACH FROM GREEN HEAD IF IN INT LIST NOT OR POINT POS
+%token <string> STRING
+%token <int> INT
+%token <float> FLOAT
+%token <bool> BOOL
+%token NULL_TYP
+%token BOOL_TYP
+%token AND BEGIN BLUE COLOR COPY COS DRAW ELSE END FLOAT_OF_INT
+%token FLOOR FOR FOREACH FROM GREEN HEAD IF IN LIST NOT OR POINT POS
 %token PRINT RED SIN STEP TAIL TO X Y
 %token ADD SUB MUL DIV MOD EQ NEQ LEQ GEQ LT GT CONS DOT EOF
-
+%token RETURN
 
 %start <program> main
 %%
