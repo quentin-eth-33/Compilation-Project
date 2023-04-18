@@ -2,11 +2,7 @@
 *
 
 # N'ignorez pas ces trois fichiers
-!analyser/analyser.ml
-!analyser/analyser.mli
-!analyser/simplifier.ml
-!analyser/type_analyser.ml
-!parser/Lexer.mll
-!parser/Parser.mly
+!analyser/
+!parser/
 !README.md
 !.gitignore
