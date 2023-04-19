@@ -13,8 +13,21 @@
 %token <int> INT
 %token <float> FLOAT
 %token <bool> BOOL
+%token FLOAT_TYP
+%token VAR
+%token COMMA
+%token SEMICOLON
+%token ASSIGN
+%token DEF
+%token L_CUR_BRK
+%token R_CUR_BRK
+%token L_SQ_BRK
+%token R_SQ_BRK
+%token L_PAR
+%token R_PAR
 %token NULL_TYP
 %token BOOL_TYP
+%token INT_TYP
 %token AND BEGIN BLUE COLOR COPY COS DRAW ELSE END FLOAT_OF_INT
 %token FLOOR FOR FOREACH FROM GREEN HEAD IF IN LIST NOT OR POINT POS
 %token PRINT RED SIN STEP TAIL TO X Y
@@ -26,3 +39,6 @@
 
 main:
 | EOF { Program([],Block([],Annotation.create $loc)) }
+
+
+
