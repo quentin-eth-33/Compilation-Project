@@ -1,136 +1,98 @@
 %{
-  open Ast
-(*
-  let make_pos x y = Pos (x, y, Annotation.create $loc)
-  let make_color r g b = Color (r, g, b, Annotation.create $loc)
-  let make_point pos color = Point (pos, color, Annotation.create $loc)
-  let make_list elts = List (elts, Annotation.create $loc)
-  let make_cons head tail = Cons (head, tail, Annotation.create $loc)*)
+    open Ast
+
+    (*Le parseur doit générer des Ast.program.
+    Pour les annotation, il vous suffit de créer l’annotation avec [Annotation.create $loc] qui sera ce qu’il vous faut dans tous les cas : $loc est un paramètre qui correspond aux positions délimitant la chaîne de caractères parsée par la règle où il est utilisé, ce qui est exactement ce qu’il faut mettre dans l’annotation.*)
 %}
 
-%token <string> ID
-%token <int> INT
-%token <float> FLOAT
-%token <bool> BOOL
+
+
+(* Ajoutez ici vos règles de grammaire *)
+
+%token FLOAT_TYP
+%token VAR
+%token COMMA
+%token SEMICOLON
+%token ASSIGN
+%token DEF
 %token L_CUR_BRK
 %token R_CUR_BRK
-%token SEMICOLON
-%token THEN
-%token COMMA
-%token FLOAT_TYP
-%token INT_TYP
+%token L_SQ_BRK
+%token R_SQ_BRK
+%token L_PAR
+%token R_PAR
+%token NULL_TYP
 %token BOOL_TYP
-%token ASSIGN
+%token INT_TYP
 %token AND BEGIN BLUE COLOR COPY COS DRAW ELSE END FLOAT_OF_INT
 %token FLOOR FOR FOREACH FROM GREEN HEAD IF IN LIST NOT OR POINT POS
 %token PRINT RED SIN STEP TAIL TO X Y
-%token L_PAR
-%token R_PAR
-
-%token L_SQ_BRK
-%token R_SQ_BRK
-
-%token ADD SUB MUL DIV MOD EQ NEQ LEQ GEQ LT GT CONS DOT
-
-%token EOF
+%token ADD SUB MUL DIV MOD EQ NEQ LEQ GEQ LT GT CONS DOT EOF
+%token RETURN
+%token <string> ID
+%token <string> STRING
+%token <int> INT
+%token <float> FLOAT
+%token <bool> BOOL
 
 %start <program> main
 %%
 
 main:
-| program EOF { $1 }
-;
+| prog = program EOF { prog }
 
 program:
-| args statement { Program ($1, $2) }
-;
+| args = arguments stmt = statement { Program(args, stmt) }
 
-args:
-| L_CUR_BRK arg_list R_CUR_BRK { $2 }
-| { [] }
-;
+arguments:
+| { [] } 
+| arg = argument SEMICOLON args = arguments { arg :: args }
 
-arg_list:
-| arg { [$1] }
-| arg_list COMMA arg { $1 @ [$3] }
-;
+argument:
+| t = type_expr id = ID { Argument(id, t, Annotation.create $loc) }
 
-arg:
-| type_expr ID { Argument ($2, $1, Annotation.create $loc) }
-;
-
+/* Règles pour type_expr */
 type_expr:
+// Ajoutez des règles pour construire des objets de type type_expr ici, par exemple:
 | INT_TYP { Type_int }
 | FLOAT_TYP { Type_float }
 | BOOL_TYP { Type_bool }
-| POS { Type_pos }
-| COLOR { Type_color }
-| POINT { Type_point }
-| LIST L_PAR type_expr R_PAR { Type_list $3 }
-;
 
+/* Règles pour statement */
 statement:
-| BEGIN statement_list END { Block ($2, Annotation.create $loc) }
-| IF expression THEN statement ELSE statement { IfThenElse ($2, $4, $6, Annotation.create $loc) }
-| FOR ID FROM expression TO expression STEP expression statement { For ($2, $4, $6, $8, $9, Annotation.create $loc) }
-| FOREACH ID IN expression statement { Foreach ($2, $4, $5, Annotation.create $loc) }
-| DRAW expression { Draw ($2, Annotation.create $loc) }
-| PRINT expression { Print ($2, Annotation.create $loc) }
-| type_expr ID ASSIGN expression { Assignment (Variable ($2, Annotation.create $loc), $4, Annotation.create $loc) }
-| type_expr ID { Variable_declaration ($2, $1, Annotation.create $loc) }
-;
+// Mettez à jour les règles existantes pour construire des objets de type statement ici
+| name = ID ASSIGN expr = expression SEMICOLON { Assignment(Variable(name, Annotation.create $loc), expr, Annotation.create $loc) }
+| VAR name = ID ASSIGN expr = expression SEMICOLON { Variable_declaration(name, Type_int, Annotation.create $loc) } // Modifier Type_int en fonction du type d'expression
+| BEGIN stmts = statement_list END { Block(stmts, Annotation.create $loc) }
+//| IF test = expression THEN i1 = statement ELSE i2 = statement { IfThenElse(test, i1, i2, Annotation.create $loc) }
+//| IF test = expression THEN i1 = statement { IfThenElse(test, i1, Nop, Annotation.create $loc) }
+// Ajoutez des règles pour les autres types de statement ici
 
+/* Règle pour statement_list */
 statement_list:
-| statement { [$1] }
-| statement_list SEMICOLON statement { $1 @ [$3] }
-;
+| { [] } (* Aucun statement *)
+| stmt = statement stmts = statement_list { stmt :: stmts }
 
 expression:
-| INT { Constant_i ($1, Annotation.create $loc) }
-| FLOAT { Constant_f ($1, Annotation.create $loc) }
-| BOOL { Constant_b ($1, Annotation.create $loc) }
-| ID { Variable ($1, Annotation.create $loc) }
-| expression ADD expression { Binary_operator (Add, $1, $3, Annotation.create $loc) }
-| expression SUB expression { Binary_operator (Sub, $1, $3, Annotation.create $loc) }
-| expression MUL expression { Binary_operator (Mul, $1, $3, Annotation.create $loc) }
-| expression DIV expression { Binary_operator (Div, $1, $3, Annotation.create $loc) }
-| expression MOD expression { Binary_operator (Mod, $1, $3, Annotation.create $loc) }
-| expression AND expression { Binary_operator (And, $1, $3, Annotation.create $loc) }
-| expression OR expression { Binary_operator (Or, $1, $3, Annotation.create $loc) }
-| expression EQ expression { Binary_operator (Eq, $1, $3, Annotation.create $loc) }
-| expression NEQ expression { Binary_operator (Ne, $1, $3, Annotation.create $loc) }
-| expression LT expression { Binary_operator (Lt, $1, $3, Annotation.create $loc) }
-| expression GT expression { Binary_operator (Gt, $1, $3, Annotation.create $loc) }
-| expression LEQ expression { Binary_operator (Le, $1, $3, Annotation.create $loc) }
-| expression GEQ expression { Binary_operator (Ge, $1, $3, Annotation.create $loc) }
-| SUB expression %prec UNARY { Unary_operator (USub, $2, Annotation.create $loc) }
-| NOT expression { Unary_operator (Not, $2, Annotation.create $loc) }
-| HEAD expression { Unary_operator (Head, $2, Annotation.create $loc) }
-| TAIL expression { Unary_operator (Tail, $2, Annotation.create $loc) }
-| FLOOR expression { Unary_operator (Floor, $2, Annotation.create $loc) }
-| FLOAT_OF_INT expression { Unary_operator (Float_of_int, $2, Annotation.create $loc) }
-| COS expression { Unary_operator (Cos, $2, Annotation.create $loc) }
-| SIN expression { Unary_operator (Sin, $2, Annotation.create $loc) }
-| expression CONS expression { Cons ($1, $3, Annotation.create $loc) }
-| L_SQ_BRK expr_list R_SQ_BRK { List ($2, Annotation.create $loc) }
-| POS L_PAR expression COMMA expression R_PAR { make_pos $3 $5 }
-| COLOR L_PAR expression COMMA expression COMMA expression R_PAR { make_color $3 $5 $7 }
-| POINT L_PAR expression COMMA expression R_PAR { make_point $3 $5 }
-| expression DOT field_accessor { Field_accessor ($3, $1, Annotation.create $loc) }
-;
+| i = INT { Constant_i(i, Annotation.create $loc) }
+| f = FLOAT { Constant_f(f, Annotation.create $loc) }
+| b = BOOL { Constant_b(b, Annotation.create $loc) }
 
-expr_list:
-| { [] }
-| expression { [$1] }
-| expr_list COMMA expression { $1 @ [$3] }
-;
+/*statement: */
 
-field_accessor:
-| X { X_accessor }
-| Y { Y_accessor }
-| RED { Red_accessor }
-| GREEN { Green_accessor }
-| BLUE { Blue_accessor }
-| COLOR { Color_accessor }
-| POSITION { Position_accessor }
-;
+
+
+%inline binop:
+| ADD   { Add }
+| SUB   { Sub }
+| MUL   { Mul }
+| DIV   { Div }
+| MOD   { Mod }
+| AND   { And }
+| OR    { Or }
+| EQ    { Eq }
+| NEQ   { Nq }
+| LT    { Lt }
+| GT    { Gt }
+| LEQ   { Lq }
+| GEQ   { Gq }
