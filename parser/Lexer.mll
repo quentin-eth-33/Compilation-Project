@@ -57,6 +57,10 @@ rule token = parse
     | ":="        { ASSIGN }
     | "::="       { DEF }
     | ","         { COMMA }
+    | "{"         { L_CUR_BRK }
+    | "}"         { R_CUR_BRK }
+    | "["         { L_SQ_BRK }
+    | "]"         { R_SQ_BRK }
     | "."         { DOT }
     | "var"       { VAR }
     | "["         { L_SQ_BRK }
@@ -66,6 +70,7 @@ rule token = parse
     | "{"         { L_CUR_BRK }
     | "}"         { R_CUR_BRK }
     | ";"         { SEMICOLON }
+    | "then"      { THEN }
 
     (* Opérateurs *)
     | "+"  { ADD }
@@ -81,6 +86,7 @@ rule token = parse
     | ">"  { GT }
     | "::" { CONS }
     | "."  { DOT }
+    
 
     | eof  { EOF }
     | "\"" ([^ '\"']* as s) "\""  { STRING(s) }
