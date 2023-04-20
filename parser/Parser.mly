@@ -8,11 +8,7 @@
 
 
 (* Ajoutez ici vos règles de grammaire *)
-%token <string> ID
-%token <string> STRING
-%token <int> INT
-%token <float> FLOAT
-%token <bool> BOOL
+
 %token FLOAT_TYP
 %token VAR
 %token COMMA
@@ -33,12 +29,70 @@
 %token PRINT RED SIN STEP TAIL TO X Y
 %token ADD SUB MUL DIV MOD EQ NEQ LEQ GEQ LT GT CONS DOT EOF
 %token RETURN
+%token <string> ID
+%token <string> STRING
+%token <int> INT
+%token <float> FLOAT
+%token <bool> BOOL
 
 %start <program> main
 %%
 
 main:
-| EOF { Program([],Block([],Annotation.create $loc)) }
+| prog = program EOF { prog }
+
+program:
+| args = arguments stmt = statement { Program(args, stmt) }
+
+arguments:
+| { [] } 
+| arg = argument SEMICOLON args = arguments { arg :: args }
+
+argument:
+| t = type_expr id = ID { Argument(id, t, Annotation.create $loc) }
+
+/* Règles pour type_expr */
+type_expr:
+// Ajoutez des règles pour construire des objets de type type_expr ici, par exemple:
+| INT_TYP { Type_int }
+| FLOAT_TYP { Type_float }
+| BOOL_TYP { Type_bool }
+
+/* Règles pour statement */
+statement:
+// Mettez à jour les règles existantes pour construire des objets de type statement ici
+| name = ID ASSIGN expr = expression SEMICOLON { Assignment(Variable(name, Annotation.create $loc), expr, Annotation.create $loc) }
+| VAR name = ID ASSIGN expr = expression SEMICOLON { Variable_declaration(name, Type_int, Annotation.create $loc) } // Modifier Type_int en fonction du type d'expression
+| BEGIN stmts = statement_list END { Block(stmts, Annotation.create $loc) }
+//| IF test = expression THEN i1 = statement ELSE i2 = statement { IfThenElse(test, i1, i2, Annotation.create $loc) }
+//| IF test = expression THEN i1 = statement { IfThenElse(test, i1, Nop, Annotation.create $loc) }
+// Ajoutez des règles pour les autres types de statement ici
+
+/* Règle pour statement_list */
+statement_list:
+| { [] } (* Aucun statement *)
+| stmt = statement stmts = statement_list { stmt :: stmts }
+
+expression:
+| i = INT { Constant_i(i, Annotation.create $loc) }
+| f = FLOAT { Constant_f(f, Annotation.create $loc) }
+| b = BOOL { Constant_b(b, Annotation.create $loc) }
+
+/*statement: */
 
 
 
+%inline binop:
+| ADD   { Add }
+| SUB   { Sub }
+| MUL   { Mul }
+| DIV   { Div }
+| MOD   { Mod }
+| AND   { And }
+| OR    { Or }
+| EQ    { Eq }
+| NEQ   { Nq }
+| LT    { Lt }
+| GT    { Gt }
+| LEQ   { Lq }
+| GEQ   { Gq }

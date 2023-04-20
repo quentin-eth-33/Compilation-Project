@@ -46,19 +46,19 @@ rule token = parse
     | "To"        { TO }
     | "X"         { X }
     | "Y"         { Y }
-    | "int"       { INT_TYP }
-    | "float"     { FLOAT_TYP }
-    | "bool"      { BOOL_TYP }
-    | "true"      { BOOL(true) }
+    | "Int"       { INT_TYP }
+    | "Float"     { FLOAT_TYP }
+    | "Bool"      { BOOL_TYP }
+    | "True"      { BOOL(true) }
     | "false"     { BOOL(false) }
-    | "bool"      { BOOL_TYP }
-    | "null"      { NULL_TYP }
-    | "return"    { RETURN }
+    | "Bool"      { BOOL_TYP }
+    | "Null"      { NULL_TYP }
+    | "Return"    { RETURN }
     | ":="        { ASSIGN }
     | "::="       { DEF }
     | ","         { COMMA }
     | "."         { DOT }
-    | "var"       { VAR }
+    | "Var"       { VAR }
     | "["         { L_SQ_BRK }
     | "]"         { R_SQ_BRK }
     | "("         { L_PAR }
