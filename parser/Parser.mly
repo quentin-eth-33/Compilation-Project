@@ -35,11 +35,6 @@
 %token <int> INT
 %token <float> FLOAT
 %token <bool> BOOL
-%token <string> ID
-%token <string> STRING
-%token <int> INT
-%token <float> FLOAT
-%token <bool> BOOL
 
 %start <program> main
 %%
