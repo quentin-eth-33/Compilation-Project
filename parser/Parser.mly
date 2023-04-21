@@ -9,6 +9,7 @@
 
 (* Ajoutez ici vos règles de grammaire *)
 
+
 %token FLOAT_TYP
 %token VAR
 %token COMMA
@@ -29,6 +30,11 @@
 %token PRINT RED SIN STEP TAIL TO X Y
 %token ADD SUB MUL DIV MOD EQ NEQ LEQ GEQ LT GT CONS DOT EOF
 %token RETURN
+%token <string> ID
+%token <string> STRING
+%token <int> INT
+%token <float> FLOAT
+%token <bool> BOOL
 %token <string> ID
 %token <string> STRING
 %token <int> INT
@@ -82,6 +88,7 @@ expression:
 
 /*statement: */
 
+/*statement: */
 
 
 %inline binop:
