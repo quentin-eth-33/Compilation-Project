@@ -1,6 +1,7 @@
 %{
     open Ast
-
+     
+    exception SyntaxError of string
     (*Le parseur doit générer des Ast.program.
     Pour les annotation, il vous suffit de créer l’annotation avec [Annotation.create $loc] qui sera ce qu’il vous faut dans tous les cas : $loc est un paramètre qui correspond aux positions délimitant la chaîne de caractères parsée par la règle où il est utilisé, ce qui est exactement ce qu’il faut mettre dans l’annotation.*)
 %}
@@ -55,14 +56,12 @@ argument:
 
 /* Règles pour type_expr */
 type_expr:
-// Ajoutez des règles pour construire des objets de type type_expr ici, par exemple:
 | INT_TYP { Type_int }
 | FLOAT_TYP { Type_float }
 | BOOL_TYP { Type_bool }
 
 /* Règles pour statement */
 statement:
-// Mettez à jour les règles existantes pour construire des objets de type statement ici
 | typ = type_expr L_PAR name = ID R_PAR SEMICOLON { Variable_declaration(name, typ, Annotation.create $loc) }
 | COPY L_PAR name = ID COMMA expr = expression R_PAR SEMICOLON { Assignment(Variable(name, Annotation.create $loc), expr, Annotation.create $loc) }
 //| VAR name = ID L_PAR expr = expression  R_PAR SEMICOLON { Variable_declaration(name, Type_int, Annotation.create $loc) } // Modifier Type_int en fonction du type d'expression
@@ -77,14 +76,43 @@ statement_list:
 | stmt = statement stmts = statement_list { stmt :: stmts }
 
 expression:
-| i = INT { Constant_i(i, Annotation.create $loc) }
+| i = INT {
+    if i >= -2147483648 && i <= 2147483647 then
+        Constant_i(i, Annotation.create $loc)
+    else
+        raise (SyntaxError "Les entiers doivent être compris entre -2147483648 et 2147483647 inclus")
+}
 | f = FLOAT { Constant_f(f, Annotation.create $loc) }
 | b = BOOL { Constant_b(b, Annotation.create $loc) }
+| POS L_PAR e1 = expression COMMA e2 = expression R_PAR SEMICOLON {
+    match e1, e2 with
+    | Constant_i(i1, _), Constant_i(i2, _) when i1 >= 0 && i1 < (1 lsl 16) && i2 >= 0 && i2 < (1 lsl 16) ->
+        Pos(Constant_i(i1, Annotation.create $loc), Constant_i(i2, Annotation.create $loc), Annotation.create $loc)
+    | _ -> raise (SyntaxError "Les expressions e1 et e2 doivent être des entiers positifs et inférieurs à 2^16")
+}
+| COLOR L_PAR e1 = expression COMMA e2 = expression COMMA e3 = expression R_PAR SEMICOLON {
+    match e1, e2, e3 with
+    | Constant_i(i1, _), Constant_i(i2, _), Constant_i(i3, _) when i1 >= 0 && i1 <= 255 && i2 >= 0 && i2 <= 255 && i3 >= 0 && i3 <= 255 ->
+        Color(Constant_i(i1, Annotation.create $loc), Constant_i(i2, Annotation.create $loc), Constant_i(i3, Annotation.create $loc), Annotation.create $loc)
+    | _ -> raise (SyntaxError "Les expressions e1, e2 et e3 doivent être des entiers compris entre 0 et 255")
+}
 
-/*statement: */
+| POINT L_PAR e1 = expression COMMA e2 = expression R_PAR SEMICOLON { Point(e1, e2, Annotation.create $loc) }
+| i = ID {Variable(i, Annotation.create $loc)}
+| e1 = expression b = binop e2 = expression { Binary_operator(b,e1,e2,Annotation.create $loc) }
+| L_PAR e = expression R_PAR { e }
+//| u = unop e = expression { Unary_operator(u,e,Annotation.create $loc) } //manque unop
+| e = expression POINT f = field_acc  { Field_accessor(f,e,Annotation.create $loc) }
+/* il reste List et  Cons */
 
-/*statement: */
-
+%inline field_acc: 
+| COLOR { Color_accessor}
+| POS { Position_accessor } 
+| X { X_accessor}
+| Y { Y_accessor}
+| BLUE { Blue_accessor } 
+| RED { Red_accessor }
+| GREEN { Green_accessor }
 
 %inline binop:
 | ADD   { Add }
@@ -95,8 +123,11 @@ expression:
 | AND   { And }
 | OR    { Or }
 | EQ    { Eq }
-| NEQ   { Nq }
+| NEQ   { Ne }
 | LT    { Lt }
 | GT    { Gt }
-| LEQ   { Lq }
-| GEQ   { Gq }
+| LEQ   { Le }
+| GEQ   { Ge }
+/*
+%inline unop:
+*/
