@@ -41,6 +41,7 @@
 main:
 | prog = program EOF { prog }
 
+
 program:
 | args = arguments stmt = statement { Program(args, stmt) }
 
@@ -61,9 +62,10 @@ type_expr:
 /* Règles pour statement */
 statement:
 // Mettez à jour les règles existantes pour construire des objets de type statement ici
-| name = ID ASSIGN expr = expression SEMICOLON { Assignment(Variable(name, Annotation.create $loc), expr, Annotation.create $loc) }
-| VAR name = ID ASSIGN expr = expression SEMICOLON { Variable_declaration(name, Type_int, Annotation.create $loc) } // Modifier Type_int en fonction du type d'expression
-| BEGIN stmts = statement_list END { Block(stmts, Annotation.create $loc) }
+| typ = type_expr L_PAR name = ID R_PAR SEMICOLON { Variable_declaration(name, typ, Annotation.create $loc) }
+| COPY L_PAR name = ID COMMA expr = expression R_PAR SEMICOLON { Assignment(Variable(name, Annotation.create $loc), expr, Annotation.create $loc) }
+//| VAR name = ID L_PAR expr = expression  R_PAR SEMICOLON { Variable_declaration(name, Type_int, Annotation.create $loc) } // Modifier Type_int en fonction du type d'expression
+//| BEGIN stmts = statement_list END { Block(stmts, Annotation.create $loc) }
 //| IF test = expression THEN i1 = statement ELSE i2 = statement { IfThenElse(test, i1, i2, Annotation.create $loc) }
 //| IF test = expression THEN i1 = statement { IfThenElse(test, i1, Nop, Annotation.create $loc) }
 // Ajoutez des règles pour les autres types de statement ici
