@@ -46,6 +46,7 @@ main:
 
 program:
 | LT args = arguments GT stmt = statement { Program(args, stmt) }
+| stmt = statement { Program([], stmt) }
 
 arguments:
 | { [] } 
@@ -69,12 +70,7 @@ statement_list: (* Nouvelle règle pour une liste d'instructions *)
 statement:
 | typ = type_expr L_PAR name = ID R_PAR SEMICOLON { Variable_declaration(name, typ, Annotation.create $loc) }
 | COPY L_PAR expr1 = expression COMMA expr2 = expression R_PAR SEMICOLON { Assignment(expr1, expr2,Annotation.create $loc) }
-| BEGIN stmts = statement_list END { Block(stmts, Annotation.create $loc) } (* Ajouté pour gérer plusieurs instructions à l'intérieur d'un bloc *)
-//| VAR name = ID L_PAR expr = expression  R_PAR SEMICOLON { Variable_declaration(name, Type_int, Annotation.create $loc) } // Modifier Type_int en fonction du type d'expression
-//| BEGIN stmts = statement_list END { Block(stmts, Annotation.create $loc) }
-//| IF test = expression THEN i1 = statement ELSE i2 = statement { IfThenElse(test, i1, i2, Annotation.create $loc) }
-//| IF test = expression THEN i1 = statement { IfThenElse(test, i1, Nop, Annotation.create $loc) }
-// Ajoutez des règles pour les autres types de statement ici
+| BEGIN stmts = statement_list END { Block(stmts, Annotation.create $loc) }
 
 expression:
 | i = INT {
@@ -86,16 +82,10 @@ expression:
 | f = FLOAT { Constant_f(f, Annotation.create $loc) }
 | b = BOOL { Constant_b(b, Annotation.create $loc) }
 | POS L_PAR e1 = expression COMMA e2 = expression R_PAR SEMICOLON {
-    match e1, e2 with
-    | Constant_i(i1, _), Constant_i(i2, _) when i1 >= 0 && i1 < (1 lsl 16) && i2 >= 0 && i2 < (1 lsl 16) ->
-        Pos(Constant_i(i1, Annotation.create $loc), Constant_i(i2, Annotation.create $loc), Annotation.create $loc)
-    | _ -> raise (SyntaxError "Les expressions e1 et e2 doivent être des entiers positifs et inférieurs à 2^16")
+    Pos(e1, e2, Annotation.create $loc)
 }
 | COLOR L_PAR e1 = expression COMMA e2 = expression COMMA e3 = expression R_PAR SEMICOLON {
-    match e1, e2, e3 with
-    | Constant_i(i1, _), Constant_i(i2, _), Constant_i(i3, _) when i1 >= 0 && i1 <= 255 && i2 >= 0 && i2 <= 255 && i3 >= 0 && i3 <= 255 ->
-        Color(Constant_i(i1, Annotation.create $loc), Constant_i(i2, Annotation.create $loc), Constant_i(i3, Annotation.create $loc), Annotation.create $loc)
-    | _ -> raise (SyntaxError "Les expressions e1, e2 et e3 doivent être des entiers compris entre 0 et 255")
+    Color(e1, e2, e3, Annotation.create $loc)
 }
 | POINT L_PAR e1 = expression COMMA e2 = expression R_PAR SEMICOLON { Point(e1, e2, Annotation.create $loc) }
 | i = ID {Variable(i, Annotation.create $loc)}
