@@ -45,7 +45,7 @@ main:
 
 
 program:
-| args = arguments stmt = statement { Program(args, stmt) }
+| LT args = arguments GT stmt = statement { Program(args, stmt) }
 
 arguments:
 | { [] } 
@@ -60,20 +60,21 @@ type_expr:
 | FLOAT_TYP { Type_float }
 | BOOL_TYP { Type_bool }
 
+statement_list: (* Nouvelle règle pour une liste d'instructions *)
+| { [] }
+| stmt = statement stmts = statement_list { stmt :: stmts }
+
+
 /* Règles pour statement */
 statement:
 | typ = type_expr L_PAR name = ID R_PAR SEMICOLON { Variable_declaration(name, typ, Annotation.create $loc) }
-| COPY L_PAR name = ID COMMA expr = expression R_PAR SEMICOLON { Assignment(Variable(name, Annotation.create $loc), expr, Annotation.create $loc) }
+| COPY L_PAR expr1 = expression COMMA expr2 = expression R_PAR SEMICOLON { Assignment(expr1, expr2,Annotation.create $loc) }
+| BEGIN stmts = statement_list END { Block(stmts, Annotation.create $loc) } (* Ajouté pour gérer plusieurs instructions à l'intérieur d'un bloc *)
 //| VAR name = ID L_PAR expr = expression  R_PAR SEMICOLON { Variable_declaration(name, Type_int, Annotation.create $loc) } // Modifier Type_int en fonction du type d'expression
 //| BEGIN stmts = statement_list END { Block(stmts, Annotation.create $loc) }
 //| IF test = expression THEN i1 = statement ELSE i2 = statement { IfThenElse(test, i1, i2, Annotation.create $loc) }
 //| IF test = expression THEN i1 = statement { IfThenElse(test, i1, Nop, Annotation.create $loc) }
 // Ajoutez des règles pour les autres types de statement ici
-
-/* Règle pour statement_list */
-statement_list:
-| { [] } (* Aucun statement *)
-| stmt = statement stmts = statement_list { stmt :: stmts }
 
 expression:
 | i = INT {
@@ -96,14 +97,27 @@ expression:
         Color(Constant_i(i1, Annotation.create $loc), Constant_i(i2, Annotation.create $loc), Constant_i(i3, Annotation.create $loc), Annotation.create $loc)
     | _ -> raise (SyntaxError "Les expressions e1, e2 et e3 doivent être des entiers compris entre 0 et 255")
 }
-
 | POINT L_PAR e1 = expression COMMA e2 = expression R_PAR SEMICOLON { Point(e1, e2, Annotation.create $loc) }
 | i = ID {Variable(i, Annotation.create $loc)}
 | e1 = expression b = binop e2 = expression { Binary_operator(b,e1,e2,Annotation.create $loc) }
 | L_PAR e = expression R_PAR { e }
-//| u = unop e = expression { Unary_operator(u,e,Annotation.create $loc) } //manque unop
+| u = unop e = expression { Unary_operator(u,e,Annotation.create $loc) } 
 | e = expression POINT f = field_acc  { Field_accessor(f,e,Annotation.create $loc) }
-/* il reste List et  Cons */
+| l = list_expression { List (l, Annotation.create $loc) }
+| e1 = expression CONS e2 = expression {
+    match e2 with
+    | List(elems, _) -> List(e1 :: elems, Annotation.create $loc)
+    | _ -> raise (SyntaxError "Le second argument de l'opérateur :: doit être une liste")
+}
+
+
+list_expression:
+| L_SQ_BRK R_SQ_BRK { [] }
+| L_SQ_BRK elems = list_elements R_SQ_BRK { elems }
+
+list_elements:
+| e = expression { [e] }
+| e = expression COMMA elems = list_elements { e :: elems }
 
 %inline field_acc: 
 | COLOR { Color_accessor}
@@ -128,6 +142,7 @@ expression:
 | GT    { Gt }
 | LEQ   { Le }
 | GEQ   { Ge }
-/*
+
 %inline unop:
-*/
+| SUB   { USub } 
+| NOT   { Not }
