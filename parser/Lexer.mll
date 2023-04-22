@@ -16,7 +16,7 @@ rule token = parse
  (*  | lower (alphanum)* as s  { ID(s) }     *)
 
     (* Mots clés *)
-    | "And"       { AND }
+    | "And"       { AND } 
     | "Begin"     { BEGIN }
     | "Blue"      { BLUE }
     | "Color"     { COLOR }
@@ -51,7 +51,6 @@ rule token = parse
     | "Bool"      { BOOL_TYP }
     | "True"      { BOOL(true) }
     | "false"     { BOOL(false) }
-    | "Bool"      { BOOL_TYP }
     | "Null"      { NULL_TYP }
     | "Return"    { RETURN }
     | ":="        { ASSIGN }
@@ -74,9 +73,9 @@ rule token = parse
     | "/"  { DIV }
     | "%"  { MOD }
     | "="  { EQ }
-    | "<>" { NEQ }
-    | "<=" { LEQ }
-    | ">=" { GEQ }
+    | "<>" { NE }
+    | "<=" { LE }
+    | ">=" { GE }
     | "<"  { LT }
     | ">"  { GT }
     | "::" { CONS }
