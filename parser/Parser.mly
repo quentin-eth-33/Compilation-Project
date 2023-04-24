@@ -60,7 +60,7 @@ type_expr:
 | COLOR { Type_color }
 | POINT { Type_point }
 | POS { Type_pos }
-| LIST L_PAR t = type_expr R_PAR { Type_list(t) }
+| LIST L_PAR i= type_expr R_PAR { Type_list(i) }
 
 statement_list: (* Nouvelle règle pour une liste d'instructions *)
 | { [] }
@@ -88,22 +88,17 @@ expression:
 | f = FLOAT { Constant_f(f, Annotation.create $loc) }
 | b = BOOL { Constant_b(b, Annotation.create $loc) }
 | s = ID {Variable(s,Annotation.create $loc) }
-| POS L_PAR e1 = expression COMMA e2 = expression R_PAR SEMICOLON {
+| POS L_PAR e1 = expression COMMA e2 = expression R_PAR option_semicolon {
     Pos(e1, e2, Annotation.create $loc)
 }
-| POINT L_PAR e1 = expression COMMA e2 = expression R_PAR SEMICOLON { Point(e1, e2, Annotation.create $loc) }
-| COLOR L_PAR e1 = expression COMMA e2 = expression COMMA e3 = expression R_PAR sc = option_semicolon { Color(e1, e2, e3, Annotation.create $loc) }
-| e = expression DOT f = field_acc %prec FIELD_ACC  { Field_accessor(f,e,Annotation.create $loc) }
-| l = list_expression { List (l, Annotation.create $loc) }
+| POINT L_PAR e1 = expression COMMA e2 = expression R_PAR option_semicolon { Point(e1, e2, Annotation.create $loc) }
+| COLOR L_PAR e1 = expression COMMA e2 = expression COMMA e3 = expression R_PAR option_semicolon { Color(e1, e2, e3, Annotation.create $loc) }
+| e = expression DOT f = field_acc  { Field_accessor(f,e,Annotation.create $loc) }
 | e1 = expression b = binop e2 = expression { Binary_operator(b,e1,e2,Annotation.create $loc)}
 | u = unop e = expression { Unary_operator(u,e, Annotation.create $loc)} %prec NOT
-| e1 = expression CONS e2 = expression {
-    match e2 with
-    | List(elems, _) -> List(e1 :: elems, Annotation.create $loc)
-    | _ -> raise (SyntaxError "Le second argument de l'opérateur :: doit être une liste")
-}
+| l = list_expression { List (l, Annotation.create $loc) }
+| e1 = expression CONS e2 = expression { Cons(e1, e2, Annotation.create $loc) }
 | L_PAR e = expression R_PAR { e } 
-
 
 list_expression:
 | L_SQ_BRK R_SQ_BRK { [] }
