@@ -60,7 +60,7 @@ type_expr:
 | COLOR { Type_color }
 | POINT { Type_point }
 | POS { Type_pos }
-| LIST { Type_list }
+| LIST L_PAR t = type_expr R_PAR { Type_list(t) }
 
 statement_list: (* Nouvelle règle pour une liste d'instructions *)
 | { [] }
@@ -93,7 +93,7 @@ expression:
 }
 | POINT L_PAR e1 = expression COMMA e2 = expression R_PAR SEMICOLON { Point(e1, e2, Annotation.create $loc) }
 | COLOR L_PAR e1 = expression COMMA e2 = expression COMMA e3 = expression R_PAR sc = option_semicolon { Color(e1, e2, e3, Annotation.create $loc) }
-| e = expression DOT f = %prec field_acc  { Field_accessor(f,e,Annotation.create $loc) }
+| e = expression DOT f = field_acc %prec FIELD_ACC  { Field_accessor(f,e,Annotation.create $loc) }
 | l = list_expression { List (l, Annotation.create $loc) }
 | e1 = expression b = binop e2 = expression { Binary_operator(b,e1,e2,Annotation.create $loc)}
 | u = unop e = expression { Unary_operator(u,e, Annotation.create $loc)} %prec NOT
