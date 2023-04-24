@@ -34,6 +34,9 @@
 %token <bool> BOOL
 
 %start <program> main
+%nonassoc DOT
+%nonassoc FIELD_ACC
+
 %%
 
 main:
@@ -90,7 +93,7 @@ expression:
 }
 | POINT L_PAR e1 = expression COMMA e2 = expression R_PAR SEMICOLON { Point(e1, e2, Annotation.create $loc) }
 | COLOR L_PAR e1 = expression COMMA e2 = expression COMMA e3 = expression R_PAR sc = option_semicolon { Color(e1, e2, e3, Annotation.create $loc) }
-| e = expression POINT f = field_acc  { Field_accessor(f,e,Annotation.create $loc) }
+| e = expression DOT f = %prec field_acc  { Field_accessor(f,e,Annotation.create $loc) }
 | l = list_expression { List (l, Annotation.create $loc) }
 | e1 = expression b = binop e2 = expression { Binary_operator(b,e1,e2,Annotation.create $loc)}
 | u = unop e = expression { Unary_operator(u,e, Annotation.create $loc)} %prec NOT
@@ -99,7 +102,7 @@ expression:
     | List(elems, _) -> List(e1 :: elems, Annotation.create $loc)
     | _ -> raise (SyntaxError "Le second argument de l'opérateur :: doit être une liste")
 }
-| L_PAR e = expression R_PAR { e }
+| L_PAR e = expression R_PAR { e } 
 
 
 list_expression:
