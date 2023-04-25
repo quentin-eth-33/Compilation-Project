@@ -12,7 +12,7 @@
       - les expressions ne peuvent pas faire d’effet de bord ici, ce qui permet de simplifier des expressions pas nécessairement constantes.
       - Les types composés (point, position et couleur) peuvent également être simplifiés (e.g., (1,2) + (2,x) peut être simplifié en (3,2+x)).
 
-    Vous détaillerez dans le rapport les différents cas que vous simplifiez dans votre simplificateur. Nique les racistes
+    Vous détaillerez dans le rapport les différents cas que vous simplifiez dans votre simplificateur. //
 *)
 
 
