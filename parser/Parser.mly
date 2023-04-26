@@ -34,9 +34,16 @@
 %token <bool> BOOL
 
 %start <program> main
+%nonassoc R_PAR
+%nonassoc ELSE
+%right AND OR
+%left EQ NE
+%left LT GT LE GE 
+%left ADD SUB
+%left MUL DIV MOD
+%left CONS
+%nonassoc NOT HEAD TAIL FLOOR FLOAT_OF_INT COS SIN
 %nonassoc DOT
-%nonassoc FIELD_ACC
-
 %%
 
 main:
@@ -64,19 +71,21 @@ type_expr:
 
 statement_list: (* Nouvelle règle pour une liste d'instructions *)
 | { [] }
-| stmt = statement stmts = statement_list { stmt :: stmts }
+| stmt = statement SEMICOLON stmts = statement_list { stmt :: stmts }
 
 statement:
-| typ = type_expr L_PAR name = ID R_PAR SEMICOLON { Variable_declaration(name, typ, Annotation.create $loc) }
-| COPY L_PAR expr1 = expression COMMA expr2 = expression R_PAR SEMICOLON { Assignment(expr1, expr2,Annotation.create $loc) }
+| typ = type_expr L_PAR name = ID R_PAR  { Variable_declaration(name, typ, Annotation.create $loc) }
+| COPY L_PAR expr1 = expression COMMA expr2 = expression R_PAR  { Assignment(expr1, expr2,Annotation.create $loc) }
 | BEGIN stmts = statement_list END { Block(stmts, Annotation.create $loc) } 
-| IF L_PAR test = expression R_PAR i1 = statement ELSE i2 = statement { IfThenElse(test,i1,i2,Annotation.create $loc) }
-| IF L_PAR test = expression R_PAR i1 = statement { IfThenElse(test,i1,(Block([],Annotation.create $loc)), Annotation.create $loc)}
+| IF L_PAR test = expression R_PAR i1 = statement { IfThenElse(test, i1, Block([], Annotation.create $loc), Annotation.create $loc) }
+| IF L_PAR test = expression R_PAR i1 = statement ELSE i2 = statement { IfThenElse(test, i1, i2, Annotation.create $loc) }
 | FOR id = ID FROM start_expr = expression TO end_expr = expression STEP step_expr = expression stmt = statement { For(id, start_expr, end_expr, step_expr, stmt, Annotation.create $loc) }
 | FOREACH id = ID IN list_expr = expression stmt = statement { Foreach(id, list_expr, stmt, Annotation.create $loc) }
 | DRAW L_PAR expr = expression R_PAR { Draw(expr, Annotation.create $loc)}
 | PRINT L_PAR expr = expression R_PAR { Print(expr, Annotation.create $loc)}
 | NOT { Nop } 
+
+
 
 expression:
 | i = INT {
@@ -88,14 +97,14 @@ expression:
 | f = FLOAT { Constant_f(f, Annotation.create $loc) }
 | b = BOOL { Constant_b(b, Annotation.create $loc) }
 | s = ID {Variable(s,Annotation.create $loc) }
-| POS L_PAR e1 = expression COMMA e2 = expression R_PAR option_semicolon {
+| POS L_PAR e1 = expression COMMA e2 = expression R_PAR  {
     Pos(e1, e2, Annotation.create $loc)
 }
-| POINT L_PAR e1 = expression COMMA e2 = expression R_PAR option_semicolon { Point(e1, e2, Annotation.create $loc) }
-| COLOR L_PAR e1 = expression COMMA e2 = expression COMMA e3 = expression R_PAR option_semicolon { Color(e1, e2, e3, Annotation.create $loc) }
+| POINT L_PAR e1 = expression COMMA e2 = expression R_PAR { Point(e1, e2, Annotation.create $loc) }
+| COLOR L_PAR e1 = expression COMMA e2 = expression COMMA e3 = expression R_PAR { Color(e1, e2, e3, Annotation.create $loc) }
 | e = expression DOT f = field_acc  { Field_accessor(f,e,Annotation.create $loc) }
 | e1 = expression b = binop e2 = expression { Binary_operator(b,e1,e2,Annotation.create $loc)}
-| u = unop e = expression { Unary_operator(u,e, Annotation.create $loc)} %prec NOT
+| u = unop e = expression { Unary_operator(u,e, Annotation.create $loc)}
 | l = list_expression { List (l, Annotation.create $loc) }
 | e1 = expression CONS e2 = expression { Cons(e1, e2, Annotation.create $loc) }
 | L_PAR e = expression R_PAR { e } 
@@ -141,7 +150,3 @@ list_elements:
 | FLOAT_OF_INT  {Float_of_int }
 | COS           { Cos }
 | SIN           { Sin }  
-
-option_semicolon:
-| SEMICOLON { () }
-| { () }
