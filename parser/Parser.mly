@@ -36,7 +36,7 @@
 %start <program> main
 %nonassoc R_PAR
 %nonassoc ELSE
-%right AND OR
+%left AND OR
 %left EQ NE
 %left LT GT LE GE 
 %left ADD SUB
@@ -50,7 +50,7 @@ main:
 | prog = program EOF { prog }
 
 program:
-| LT args = arguments GT stmt = statement { Program(args, stmt) } (* Modifié pour utiliser statement_list au lieu de statement *)
+| LT args = arguments GT stmt = statement { Program(args, stmt) } 
 | stmt = statement { Program([], stmt) }
 
 arguments:
@@ -69,9 +69,9 @@ type_expr:
 | POS { Type_pos }
 | LIST L_PAR i= type_expr R_PAR { Type_list(i) }
 
-statement_list: (* Nouvelle règle pour une liste d'instructions *)
-| { [] }
-| stmt = statement SEMICOLON stmts = statement_list { stmt :: stmts }
+statement_list:
+| stmts = statement_list SEMICOLON stmt = statement { stmts @ [stmt] }
+| stmt = statement { [stmt] }
 
 statement:
 | typ = type_expr L_PAR name = ID R_PAR  { Variable_declaration(name, typ, Annotation.create $loc) }
