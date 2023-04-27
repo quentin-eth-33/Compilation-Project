@@ -1,26 +1,3 @@
-open Util
-open Ast
-
-(*
-    Réalisez ici l’analyse de type d’un programme. Faites une sous-fonction récursive pour les expressions et les statements.
-
-    L’idée est la même que dans le langage du cours : pour chaque élément, commencez par typer ses sous-éléments. Ensuite, en fonction de l’élément et du type de ses sous-éléments, déterminez son type, et placez-le dans l’annotation qui l’accompagne.
-    Seules les expressions peuvent ainsi être typées.
-
-    Les fonctions devront manipuler un environnement qui associera chaque variable à son type. Les déclarations fixent ces types et ces types sont vérifiés lors de chaque utilisation d’une variable.
-
-    Attention, les déclarations sont locales à un bloc, vous devez donc utiliser les fonctions Environment.add_layer et Environment.remove_layer pour le gérer.
-
-    Cette fonction doit également effectuer les rapports d’erreur et d’avertissement dans [report].
-
-    Ces fonction font un pattern matching sur leur argument principal et traitent chaque cas séparément. Elles font uniquement des effet de bord.
-    Par exemple : type_expression : Ast.type_expr annotation -> Util.Error_report.t -> Ast.expression -> unit
-
-    Vous pouvez également effectuer ici (en même temps ou dans une fonction séparée) une analyse d’initialisation des variables (auquel cas, il faut ajouter un argument supplémentaire à ce qui est décrit ci-dessus).
-
-    Vous préciserez ce que vous avez traité dans votre rapport.
-*)
-
 let type_analyser report program =
   let type_environment = Environment.new_environment () in
   Environment.add type_environment "x" Type_int;
@@ -36,14 +13,89 @@ let type_analyser report program =
         type_expression env e1;
         type_expression env e2;
         Type_pos
+      | Point (e1, e2, _) ->
+        type_expression env e1;
+        type_expression env e2;
+        Type_point
+      | Color (e1, e2, e3, _) ->
+        type_expression env e1;
+        type_expression env e2;
+        type_expression env e3;
+        Type_color
+      | Variable (name, _) ->
+        Environment.find_variable_type env name
+      | Field_accessor (fa, e, _) ->
+        type_expression env e;
+        (match fa with
+         | Color_accessor -> Type_color
+         | Position_accessor -> Type_pos
+         | X_accessor | Y_accessor -> Type_int
+         | Blue_accessor | Red_accessor | Green_accessor -> Type_int)
+      | Binary_operator (op, e1, e2, _) ->
+        type_expression env e1;
+        type_expression env e2;
+        (match op with
+         | Add | Sub | Mul | Div | Mod -> Type_int
+         | And | Or | Lt | Gt | Le | Ge | Ne | Eq -> Type_bool)
+      | Unary_operator (op, e, _) ->
+        type_expression env e;
+        (match op with
+         | USub | Floor | Float_of_int | Cos | Sin -> Type_int
+         | Not | Head | Tail -> Type_bool)
+      | List (elems, _) ->
+        let rec list_type = function
+          | [] -> Type_list Type_null
+          | h :: t ->
+            let ht = type_expression env h in
+            let tt = list_type t in
+            if ht = tt then ht else raise (TypeError "Type mismatch in list")
+        in list_type elems
+      | Cons (e1, e2, _) ->
+        type_expression env e1;
+        type_expression env e2;
+        Type_list (type_expression env e1)
     in
     ann.type_expr <- Some te
 
   and type_statement env stmt =
+    match stmt with
+    | Variable_declaration (name, typ, _) ->
+      Environment.add_variable env name typ
+    | Assignment (expr1, expr2, _) ->
+      type_expression env expr1;
+      type_expression env expr2
+    | Block (stmts, _) ->
+      let new_env = Environment.add_layer env in
+      List.iter (type_statement new_env) stmts;
+      Environment.remove_layer new_env
+    | IfThenElse (test, i1, i2, _) ->
+      type_expression env test;
+      type_statement env i1;
+      type_statement env i2
+    | For (id, start_expr, end_expr, step_expr, stmt, _) ->
+      type_expression env start_expr;
+      type_expression env end_expr;
+      type_expression env step_expr;
+      type_statement (Environment.add_variable env id Type_int) stmt
+      | Foreach (id, list_expr, stmt, _) ->
+        let list_type = type_expression env list_expr in
+        (match list_type with
+         | Type_list elem_type -> type_statement (Environment.add_variable env id elem_type) stmt
+         | _ -> raise (TypeError "Foreach expects a list"))
+      | Draw (expr, _) ->
+        let expr_type = type_expression env expr in
+        (match expr_type with
+         | Type_pos | Type_point -> ()
+         | _ -> raise (TypeError "Draw expects a pos or point"))
+      | Print (expr, _) ->
+        type_expression env expr;
+        ()
+      | Nop -> ()
   
-  match program with
-  | Program (args, stmt) ->
-    let env = Environment.add_layer type_environment in
-    List.iter (fun (Argument (name, t, _)) ->
-      let env = Environment.add_variable env name t in ()) args;
-    type_statement env stmt
+    match program with
+    | Program (args, stmt) ->
+      let env = Environment.add_layer type_environment in
+      List.iter (fun (Argument (name, t, _)) ->
+        let env = Environment.add_variable env name t in ()) args;
+      type_statement env stmt
+  
