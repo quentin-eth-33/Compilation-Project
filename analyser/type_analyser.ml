@@ -26,4 +26,24 @@ let type_analyser report program =
   Environment.add type_environment "x" Type_int;
   Error_report.add_warning report
     ("sample_warning", (Lexing.dummy_pos, Lexing.dummy_pos));
-  match program with _ -> ()
+
+  let rec type_expression env (expr, ann) =
+    let te = match expr with
+      | Constant_i (i, _) -> Type_int
+      | Constant_f (f, _) -> Type_float
+      | Constant_b (b, _) -> Type_bool
+      | Pos (e1, e2, _) ->
+        type_expression env e1;
+        type_expression env e2;
+        Type_pos
+    in
+    ann.type_expr <- Some te
+
+  and type_statement env stmt =
+  
+  match program with
+  | Program (args, stmt) ->
+    let env = Environment.add_layer type_environment in
+    List.iter (fun (Argument (name, t, _)) ->
+      let env = Environment.add_variable env name t in ()) args;
+    type_statement env stmt
