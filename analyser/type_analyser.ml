@@ -1,18 +1,21 @@
+open Util
+open Ast
 let type_analyser report program =
   let type_environment = Environment.new_environment () in
   Environment.add type_environment "x" Type_int;
   Error_report.add_warning report
     ("sample_warning", (Lexing.dummy_pos, Lexing.dummy_pos));
 
-  let rec type_expression env (expr, ann) =
-    let te = match expr with
-      | Constant_i (i, _) -> Type_int
-      | Constant_f (f, _) -> Type_float
-      | Constant_b (b, _) -> Type_bool
-      | Pos (e1, e2, _) ->
-        type_expression env e1;
-        type_expression env e2;
-        Type_pos
+  let rec type_expression env expr =
+    match expr with
+      | Constant_i (i, annotation) -> Annotation.set_type annotation Type_int;(* Constant_i(i, set_type annotation Type_int)*)
+      | Constant_f (f, annotation) -> Annotation.set_type annotation Type_float;
+      | Constant_b (b, annotation) -> Annotation.set_type annotation Type_bool;
+      | Pos (e1, e2, annotation) ->
+        let te1 = type_expression env e1 in
+    let te2 = type_expression env e2 in
+    Annotation.set_type annotation Type_pos;
+        
       | Point (e1, e2, _) ->
         type_expression env e1;
         type_expression env e2;
