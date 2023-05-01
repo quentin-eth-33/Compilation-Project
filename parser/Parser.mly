@@ -6,37 +6,35 @@
 %}
 
 (* Ajoutez ici vos règles de grammaire *)
-
 %token FLOAT_TYP
-%token VAR
 %token COMMA
 %token SEMICOLON
-%token ASSIGN
-%token DEF
-%token L_CUR_BRK
-%token R_CUR_BRK
 %token L_SQ_BRK
 %token R_SQ_BRK
 %token L_PAR
 %token R_PAR
-%token NULL_TYP
 %token BOOL_TYP
 %token INT_TYP
 %token AND BEGIN BLUE COLOR COPY COS DRAW ELSE END FLOAT_OF_INT
 %token FLOOR FOR FOREACH FROM GREEN HEAD IF IN LIST NOT OR POINT POS
 %token PRINT RED SIN STEP TAIL TO X Y
 %token ADD SUB MUL DIV MOD EQ NE LE GE LT GT CONS DOT EOF
-%token RETURN
 %token <string> ID
-%token <string> STRING
 %token <int> INT
 %token <float> FLOAT
 %token <bool> BOOL
 
 %start <program> main
+%nonassoc R_PAR
+%nonassoc ELSE
+%left AND OR
+%left EQ NE
+%left LT GT LE GE 
+%left ADD SUB
+%left MUL DIV MOD
+%left CONS
+%nonassoc NOT
 %nonassoc DOT
-%nonassoc FIELD_ACC
-
 %%
 
 main:

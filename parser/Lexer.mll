@@ -50,21 +50,15 @@ rule token = parse
     | "Float"     { FLOAT_TYP }
     | "Bool"      { BOOL_TYP }
     | "True"      { BOOL(true) }
-    | "false"     { BOOL(false) }
-    | "Null"      { NULL_TYP }
-    | "Return"    { RETURN }
-    | ":="        { ASSIGN }
-    | "::="       { DEF }
+    | "False"     { BOOL(false) }
     | ","         { COMMA }
     | "."         { DOT }
-    | "Var"       { VAR }
     | "["         { L_SQ_BRK }
     | "]"         { R_SQ_BRK }
     | "("         { L_PAR }
     | ")"         { R_PAR }
-    | "{"         { L_CUR_BRK }
-    | "}"         { R_CUR_BRK }
     | ";"         { SEMICOLON }
+    (*| "Pi"         { Float.Pi }*)
 
     (* Opérateurs *)
     | "+"  { ADD }
@@ -79,10 +73,8 @@ rule token = parse
     | "<"  { LT }
     | ">"  { GT }
     | "::" { CONS }
-    | "."  { DOT }
 
     | eof  { EOF }
-    | "\"" ([^ '\"']* as s) "\""  { STRING(s) }
     | (digit)* "." (digit)* as s {FLOAT(try float_of_string s with Failure _ -> raise (Error(s)) )}
     | (digit)+ as s     { INT(try int_of_string s with Failure _ ->(let pos = Lexing.lexeme_start_p lexbuf in raise (Error(Format.sprintf "Line %d, char %d ,Read: '%s'. It is not a valid integer" pos.pos_lnum (pos.pos_cnum - pos.pos_bol +1) s)) ))}
     | eof               { EOF }

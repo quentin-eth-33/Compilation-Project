@@ -1,5 +1,4 @@
 open Ast
-open Util
 let rec simplify_expr expr =
   match expr with
   | Constant_i (i, annotation) -> Constant_i (i, annotation)
@@ -70,7 +69,7 @@ let rec simplify_stmt stmt =
     | Print (expr, annotation) ->
         let expr_simplified = simplify_expr expr in
         (Print (expr_simplified, annotation), annotation)
-        (*| Nop -> (Nop, annotation)*)
+
 
   in
   (simplified_stmt, annotation)
@@ -78,3 +77,5 @@ let rec simplify_stmt stmt =
 let simplifier (Program (args, stmt)) =
   let simplified_stmt, _ = simplify_stmt stmt in
   Program (args, simplified_stmt)
+
+ (* let simplifier program = program*)
