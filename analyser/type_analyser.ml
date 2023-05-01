@@ -32,23 +32,26 @@ let type_analyser report program =
           Annotation.set_type annotation a
         | None -> 
           Error_report.add_error report
-            (Format.sprintf "Variable %s undeclared" name, Annotation.get_pos annotation);
+          (Format.sprintf "Type mismatch: expected %s, but got %s" (Ast.string_of_type_expr (Option.get t1)) (Ast.string_of_type_expr (Option.get t2)), Annotation.get_pos annotation);
           let empty_annotation = Annotation.create (Lexing.dummy_pos, Lexing.dummy_pos) in
           empty_annotation)
-      | Binary_operator (_, e1, e2, annotation) ->
-        let te1 = type_expression env e1 report in
-        let te2 = type_expression env e2 report in
-        let t1 = Annotation.get_type te1 in
-        let t2 = Annotation.get_type te2 
-        if t1 <> t2 then begin
-          Error_report.add_error report
-            (Format.sprintf "Type mismatch: expected %s, but got %s" (Type.to_string t1) (Type.to_string t2), Annotation.get_pos annotation);
-          let empty_annotation = Annotation.create (Lexing.dummy_pos, Lexing.dummy_pos) in
-          empty_annotation
-        end else begin
-          Annotation.set_type annotation t1
-        end
-      | Unary_operator (e, annotation) ->
+          | Binary_operator (op, e1, e2, annotation) ->
+            let te1 = type_expression env e1 report in
+            let te2 = type_expression env e2 report in
+            let t1 = Annotation.get_type te1 in
+            let t2 = Annotation.get_type te2 in
+            if t1 <> t2 then 
+              begin
+                Error_report.add_error report
+                (Format.sprintf "Type mismatch: expected %s, but got %s" (Ast.string_of_type_expr (Option.get t1)) (Ast.string_of_type_expr (Option.get t2)), Annotation.get_pos annotation);
+                let empty_annotation = Annotation.create (Lexing.dummy_pos, Lexing.dummy_pos) in
+                empty_annotation
+              end
+            else begin
+              Annotation.set_type annotation (Option.get t1)
+            end
+        
+     (* | Unary_operator (e, annotation) ->
         let t = type_expression env e report in
         (* Add proper type checking for unary operators *)
         Annotation.set_type annotation Annotation.get_type t; (* Replace Type_int with the correct type based on the operator *)
@@ -65,6 +68,7 @@ let type_analyser report program =
         let _ = type_expression env e2 report in
         (* Add proper type checking for cons *)
         Annotation.set_type annotation (Type_list Type_int) (* Replace Type_int with the correct type based on the cons elements *)
+      *)
       in 
       let process_expression expr =
         ignore (type_expression type_environment expr report)
